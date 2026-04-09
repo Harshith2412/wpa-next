@@ -1,0 +1,18 @@
+# Rust build artifacts
+/target/
+/Cargo.lock
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Test output
+/tmp/
+
+# Credentials — never commit these
+*.pem
+*.key
+*.p12

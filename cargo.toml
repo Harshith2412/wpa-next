@@ -1,0 +1,70 @@
+[package]
+name = "wpa-next"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.70"
+
+description = "Hybrid post-quantum resistant Wi-Fi security protocol prototype (ML-KEM-768 + X25519 + HKDF-SHA384)"
+authors = ["Harshith Madhavaram"]
+license = "MIT"
+repository = "https://github.com/harshithmadhavaram/wpa-next"
+homepage = "https://github.com/harshithmadhavaram/wpa-next"
+documentation = "https://docs.rs/wpa-next"
+readme = "README.md"
+keywords = ["cryptography", "post-quantum", "wifi", "ml-kem", "security"]
+categories = ["cryptography", "network-programming", "authentication"]
+exclude = [
+    ".github/",
+    "*.sh",
+]
+
+[lib]
+name = "wpa_next"
+path = "src/lib.rs"
+
+[[bin]]
+name = "wpa-next"
+path = "src/main.rs"
+
+[dependencies]
+# Post-Quantum KEM: ML-KEM-768 per FIPS 203
+libcrux-ml-kem = { version = "0.0.2", features = ["mlkem768"] }
+
+# Classical ECDH: X25519 via ring
+ring = "0.17"
+
+# Zeroizing wrappers to clear secrets from memory on drop
+zeroize = { version = "1.8", features = ["derive"] }
+
+# HMAC, HKDF (SHA-384 used for hybrid combiner + cookie challenges)
+hkdf = "0.12"
+sha2 = "0.10"
+hmac = "0.12"
+
+# Constant-time comparison for secret-dependent logic
+subtle = "2.6"
+
+# Random number generation
+rand = "0.8"
+rand_core = { version = "0.6", features = ["getrandom"] }
+
+# Serialization for frame structures
+serde = { version = "1.0", features = ["derive"] }
+bincode = "1.3"
+
+# Hex encoding for debug/demo output
+hex = "0.4"
+
+# Ergonomic error derivation
+thiserror = "1.0"
+
+# Timestamp / sequence IDs
+chrono = "0.4"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+
+[profile.dev]
+opt-level = 1
