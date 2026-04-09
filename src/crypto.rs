@@ -62,7 +62,11 @@ pub const HMAC_LEN: usize = 48;
 pub struct SessionKey(pub [u8; SESSION_KEY_LEN]);
 
 impl SessionKey {
-    /// Constant-time equality check — never branch on secret data.
+    /// Constant-time equality check — never branches on secret data.
+    ///
+    /// Use this instead of `==` whenever comparing session keys to prevent
+    /// timing side-channel attacks.
+    #[allow(dead_code)]
     pub fn ct_eq(&self, other: &SessionKey) -> bool {
         self.0.ct_eq(&other.0).into()
     }
@@ -251,18 +255,25 @@ pub fn verify_cookie(
 
 // ── Error Types ───────────────────────────────────────────────────────────────
 
+/// Errors that can occur during WPA-Next cryptographic operations.
 #[derive(Debug, thiserror::Error)]
 pub enum CryptoError {
+    /// Key generation failed due to insufficient entropy or an RNG error.
     #[error("Key generation failed")]
     KeyGen,
+    /// X25519 ECDH key agreement failed (invalid peer public key).
     #[error("X25519 ECDH agreement failed")]
     Ecdh,
+    /// HKDF-SHA384 expansion failed (output length too large).
     #[error("HKDF expansion failed (output too long)")]
     Hkdf,
+    /// The ephemeral private key was already consumed — each key pair is single-use.
     #[error("Private key already consumed (single-use ephemeral)")]
     AlreadyUsed,
+    /// ML-KEM ciphertext was not exactly [`MLKEM_CT_LEN`] bytes.
     #[error("Invalid ML-KEM ciphertext length")]
     InvalidCiphertext,
+    /// ML-KEM public key was not exactly [`MLKEM_PK_LEN`] bytes.
     #[error("Invalid ML-KEM public key length")]
     InvalidPublicKey,
 }

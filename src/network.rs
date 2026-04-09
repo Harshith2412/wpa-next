@@ -86,9 +86,12 @@ pub struct FastLinkFrame {
 }
 
 impl FastLinkFrame {
+    /// Protocol magic bytes identifying a WPA-Next frame.
     pub const MAGIC: [u8; 4] = *b"WPAN";
+    /// Frame type discriminant for [`FastLinkFrame`] (Stage 1 Discovery).
     pub const FRAME_TYPE: u8 = 0x01;
 
+    /// Create a new [`FastLinkFrame`] with the given X25519 public key and station MAC.
     pub fn new(x25519_pk: [u8; X25519_PK_LEN], station_mac: [u8; 6]) -> Self {
         FastLinkFrame {
             magic: Self::MAGIC,
@@ -99,6 +102,7 @@ impl FastLinkFrame {
         }
     }
 
+    /// Returns `true` if the magic, version, and frame_type fields are valid.
     pub fn is_valid(&self) -> bool {
         self.magic == Self::MAGIC && self.version == 1 && self.frame_type == Self::FRAME_TYPE
     }
@@ -136,6 +140,7 @@ pub struct FragmentHeader {
 /// A single fragment of a fragmented PQ payload — this is what goes over the air.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FragmentedPQFrame {
+    /// Frame header carrying sequence ID, fragment index, and length metadata.
     pub header: FragmentHeader,
 
     /// DoS-mitigation cookie: only populated on frag_index == 0.
@@ -149,6 +154,7 @@ pub struct FragmentedPQFrame {
 }
 
 impl FragmentedPQFrame {
+    /// Frame type discriminant for [`FragmentedPQFrame`] (Stage 2 Quantization).
     pub const FRAME_TYPE: u8 = 0x02;
 }
 
@@ -240,7 +246,8 @@ struct StationHandshakeState {
 
 /// Access Point — starts stateless, accepts connections.
 pub struct AccessPoint {
-    /// MAC address of this AP.
+    /// MAC address of this AP (informational; used in cookie binding).
+    #[allow(dead_code)]
     pub mac: [u8; 6],
 
     /// AP's ML-KEM-768 key pair. The public key is distributed to stations.
@@ -420,6 +427,7 @@ pub struct Station {
 }
 
 impl Station {
+    /// Create a new [`Station`] with a fresh ephemeral X25519 key pair.
     pub fn new(mac: [u8; 6]) -> Result<Self, NetworkError> {
         Ok(Station {
             mac,
@@ -506,23 +514,30 @@ fn mac_to_u64(mac: &[u8; 6]) -> u64 {
 
 // ── Error Types ───────────────────────────────────────────────────────────────
 
+/// Errors that can occur during WPA-Next network / protocol operations.
 #[derive(Debug, thiserror::Error)]
 pub enum NetworkError {
+    /// An underlying cryptographic primitive failed.
     #[error("Cryptographic operation failed: {0}")]
     Crypto(#[from] CryptoError),
 
+    /// A received frame had an invalid magic, version, or type field.
     #[error("Invalid frame: {0}")]
     InvalidFrame(&'static str),
 
+    /// The DoS-mitigation cookie in a fragment-0 frame did not verify.
     #[error("DoS cookie verification failed")]
     InvalidCookie,
 
+    /// Fragment reassembly failed — fragments were incomplete, out-of-range, or had mismatched sequence IDs.
     #[error("Fragment reassembly failed — incomplete or inconsistent fragments")]
     ReassemblyFailed,
 
+    /// A non-initial fragment arrived with no prior reassembly state (fragment 0 was never received or cookie failed).
     #[error("Unknown station — received non-initial fragment without prior state")]
     UnknownStation,
 
+    /// The X25519 key pair was already consumed — each ephemeral key pair is single-use.
     #[error("X25519 key pair already consumed (single-use)")]
     X25519Consumed,
 }
