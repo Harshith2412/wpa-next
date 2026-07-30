@@ -338,7 +338,9 @@ In the implemented design, the AP broadcasts its ML-KEM public key (which would 
 Truncating the HMAC would reduce security. At 48 bytes, an attacker has a 1-in-2^384 chance of guessing a valid cookie, making brute-force completely infeasible even with quantum hardware.
 
 ---
+## Security
 
+This project uses [Snyk](https://snyk.io/) to help identify and remediate vulnerabilities through the Snyk Secure Developer Program.
 ## References
 
 - [FIPS 203](https://csrc.nist.gov/pubs/fips/203/final) — ML-KEM Standard (NIST, 2024)
